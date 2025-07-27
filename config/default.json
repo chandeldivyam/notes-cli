@@ -1,0 +1,29 @@
+{
+  "audio": {
+    "sample_rate": 16000,
+    "channels": 1,
+    "chunk_duration_ms": 3000,
+    "overlap_ms": 500,
+    "vad_threshold": 0.6,
+    "noise_gate_threshold": 0.01
+  },
+  "transcription": {
+    "model": "models/ggml-base.en.bin",
+    "language": "en",
+    "translate": false,
+    "max_tokens": 224,
+    "temperature": 0.0,
+    "threads": 4
+  },
+  "output": {
+    "format": "text",
+    "timestamps": true,
+    "real_time": true,
+    "file": "transcript.txt"
+  },
+  "performance": {
+    "ring_buffer_size": 16384,
+    "max_latency_ms": 1000,
+    "enable_vad": true
+  }
+}
