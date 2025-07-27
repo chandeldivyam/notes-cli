@@ -179,7 +179,7 @@ private:
     
     bool startAudioCapture() {
         std::vector<std::string> args = {
-            "./working_audio_capture",
+            "./audio_capture",
             "--pipe", pipe_path_
         };
         
@@ -201,7 +201,7 @@ private:
                 freopen("/dev/null", "w", stderr);
             }
             
-            execv("./working_audio_capture", c_args.data());
+            execv("./audio_capture", c_args.data());
             exit(1);
         } else if (capture_pid_ < 0) {
             std::cerr << "❌ Failed to start audio capture process" << std::endl;
