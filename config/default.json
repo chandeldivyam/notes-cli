@@ -8,7 +8,7 @@
     "noise_gate_threshold": 0.01
   },
   "transcription": {
-    "model": "models/ggml-base.en.bin",
+    "model": "models/ggml-large-v3-turbo.bin",
     "language": "en",
     "translate": false,
     "max_tokens": 224,

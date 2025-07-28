@@ -117,9 +117,6 @@ class WorkingAudioRecorder: NSObject {
         
         // Calculate RMS for debugging
         let rms = calculateRMS(mixedBuffer)
-        if rms > 0.001 {
-            print("🔊 Mixed audio level: \(String(format: "%.6f", rms))")
-        }
         
         // Convert to data and write to pipe
         if let data = bufferToData(mixedBuffer) {
@@ -371,9 +368,6 @@ extension WorkingAudioRecorder: SCStreamOutput {
         
         // Calculate RMS for debugging
         let rms = calculateRMSFromSamples(audioSamples)
-        if rms > 0.001 {
-            print("🔊 System audio level: \(String(format: "%.6f", rms))")
-        }
     }
     
     private func convertSampleBufferToPCMBuffer(_ sampleBuffer: CMSampleBuffer) -> AVAudioPCMBuffer? {

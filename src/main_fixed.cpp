@@ -106,11 +106,6 @@ public:
         // Main loop with proper shutdown handling
         while (!g_shutdown.load() && transcriber_->isRunning()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            
-            // Print periodic stats if verbose
-            if (config_.verbose && transcribed_chunks_.load() > 0 && (transcribed_chunks_.load() % 10 == 0)) {
-                printStatistics();
-            }
         }
         
         std::cout << "\n🛑 Shutting down..." << std::endl;

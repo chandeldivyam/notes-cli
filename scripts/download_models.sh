@@ -16,6 +16,8 @@ TINY_MODEL="ggml-tiny.en.bin"
 BASE_MODEL="ggml-base.en.bin"
 SMALL_MODEL="ggml-small.en.bin"
 MEDIUM_MODEL="ggml-medium.en.bin"
+LARGE_V3_TURBO_MODEL="ggml-large-v3-turbo.bin"
+LARGE_V3_TURBO_Q8_MODEL="ggml-large-v3-turbo-q8_0.bin"
 
 # Check available disk space
 AVAILABLE_SPACE=$(df -m "$MODELS_DIR" | tail -1 | awk '{print $4}')
@@ -84,6 +86,18 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     download_model "$MEDIUM_MODEL" "High accuracy, high latency (1.5GB)"
 fi
 
+read -p "❓ Download large-v3-turbo model (latest, 4x faster than large-v3)? [y/N]: " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    download_model "$LARGE_V3_TURBO_MODEL" "Latest model, 4x faster than large-v3 (1.6GB)"
+fi
+
+read -p "❓ Download large-v3-turbo-q8_0 model (8-bit quantized, smaller)? [y/N]: " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    download_model "$LARGE_V3_TURBO_Q8_MODEL" "8-bit quantized turbo model (874MB)"
+fi
+
 # Download multilingual base if user wants other languages
 echo ""
 read -p "❓ Download multilingual base model for other languages? [y/N]: " -n 1 -r
@@ -97,7 +111,9 @@ echo "📊 Model recommendations:"
 echo "  🚀 Real-time: Use ggml-tiny.en.bin or ggml-base.en.bin"
 echo "  ⚖️  Balanced: Use ggml-base.en.bin (default)"
 echo "  🎯 Accuracy: Use ggml-small.en.bin"
-echo "  🔬 Best: Use ggml-medium.en.bin (not real-time)"
+echo "  🔬 Best quality: Use ggml-medium.en.bin (not real-time)"
+echo "  ⚡ Latest/Fastest: Use ggml-large-v3-turbo-q8_0.bin (balanced size/quality)"
+echo "  🏆 Best overall: Use ggml-large-v3-turbo.bin (latest OpenAI model)"
 echo ""
 
 echo "✅ Model download completed!"
