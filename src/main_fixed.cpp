@@ -7,6 +7,9 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
+#include <set>
+#include <cctype>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -290,18 +293,96 @@ private:
     bool isRepetitiveText(const std::string& text) {
         if (text.length() < 10) return false;
         
-        for (size_t len = 2; len <= text.length() / 3; ++len) {
-            std::string pattern = text.substr(0, len);
-            size_t count = 0;
-            size_t pos = 0;
+        // Split text into words for more accurate detection
+        std::vector<std::string> words;
+        std::istringstream iss(text);
+        std::string word;
+        while (iss >> word) {
+            // Clean punctuation from word for comparison
+            std::string clean_word = word;
+            clean_word.erase(std::remove_if(clean_word.begin(), clean_word.end(), 
+                [](char c) { return std::ispunct(c); }), clean_word.end());
             
-            while ((pos = text.find(pattern, pos)) != std::string::npos) {
-                count++;
-                pos += len;
+            if (!clean_word.empty()) {
+                // Convert to lowercase for case-insensitive comparison
+                std::transform(clean_word.begin(), clean_word.end(), clean_word.begin(), ::tolower);
+                words.push_back(clean_word);
             }
-            
-            if (count >= 3) {
-                return true;
+        }
+        
+        if (words.size() < 4) return false;
+        
+        // Common words that shouldn't count as repetitive patterns
+        std::set<std::string> common_words = {
+            "the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
+            "a", "an", "is", "are", "was", "were", "be", "been", "have", "has", "had",
+            "do", "does", "did", "will", "would", "could", "should", "can", "may", "might",
+            "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
+            "this", "that", "these", "those", "here", "there", "where", "when", "why", "how",
+            "what", "who", "which", "so", "now", "then", "well", "okay", "ok", "yeah", "yes",
+            "no", "not", "just", "like", "know", "think", "see", "look", "get", "go", "come"
+        };
+        
+        // Check for word-level repetition patterns with adaptive thresholds
+        int total_words = words.size();
+        int min_pattern_length = std::max(2, total_words / 20); // Longer patterns for longer text
+        int max_pattern_length = std::min(8, total_words / 3);  // Cap pattern length
+        
+        for (int len = min_pattern_length; len <= max_pattern_length; ++len) {
+            for (size_t start = 0; start <= words.size() - len; ++start) {
+                // Create pattern from consecutive words
+                std::vector<std::string> pattern(words.begin() + start, words.begin() + start + len);
+                
+                // Skip patterns that are only common words
+                bool all_common = true;
+                for (const auto& pattern_word : pattern) {
+                    if (common_words.find(pattern_word) == common_words.end()) {
+                        all_common = false;
+                        break;
+                    }
+                }
+                if (all_common) continue;
+                
+                // Count exact and near-exact occurrences of this pattern
+                int exact_count = 0;
+                int fuzzy_count = 0;
+                
+                for (size_t i = 0; i <= words.size() - len; ++i) {
+                    int matches = 0;
+                    for (size_t j = 0; j < len; ++j) {
+                        if (words[i + j] == pattern[j]) {
+                            matches++;
+                        }
+                    }
+                    
+                    if (matches == len) {
+                        exact_count++;
+                    } else if (matches >= len * 0.7) { // 70% similarity for fuzzy match
+                        fuzzy_count++;
+                    }
+                }
+                
+                // Adaptive thresholds based on text length and pattern length
+                int repetition_threshold;
+                if (total_words > 50) {
+                    // For longer text, require more repetitions
+                    repetition_threshold = std::max(5, total_words / 15);
+                } else if (total_words > 20) {
+                    repetition_threshold = 4;
+                } else {
+                    repetition_threshold = 3;
+                }
+                
+                // Also require that repetitions make up a significant portion of the text
+                double repetition_ratio = (double)(exact_count + fuzzy_count * 0.5) * len / total_words;
+                
+                // Flag as repetitive if:
+                // 1. Too many exact repetitions, OR
+                // 2. Moderate repetitions that dominate the text (>40% repetition ratio)
+                if (exact_count >= repetition_threshold || 
+                    (exact_count + fuzzy_count >= repetition_threshold && repetition_ratio > 0.4)) {
+                    return true;
+                }
             }
         }
         
