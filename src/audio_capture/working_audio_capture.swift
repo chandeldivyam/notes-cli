@@ -142,18 +142,25 @@ class WorkingAudioRecorder: NSObject {
         bufferLock.lock()
         defer { bufferLock.unlock() }
         
-        // Copy microphone data and mix with system audio
+        // Enhanced audio mixing with compression and normalization
         for channel in 0..<channelCount {
             for frame in 0..<frameLength {
-                var sample = micChannelData[channel][frame] * 0.7 // Mic at 70% volume
+                var micSample = micChannelData[channel][frame]
+                var systemSample: Float = 0.0
                 
-                // Add system audio if available
+                // Get system audio sample if available
                 let systemIndex = frame * channelCount + channel
                 if systemIndex < systemAudioBuffer.count {
-                    sample += systemAudioBuffer[systemIndex] * 0.5 // System at 50% volume
+                    systemSample = systemAudioBuffer[systemIndex]
                 }
                 
-                mixedChannelData[channel][frame] = sample
+                // Apply soft compression to prevent clipping
+                micSample = tanh(micSample * 0.8) // Soft clipping with gain
+                systemSample = tanh(systemSample * 0.6) // Slightly lower system audio
+                
+                // Mix with automatic gain control and prevent clipping
+                let mixed = (micSample + systemSample) * 0.7
+                mixedChannelData[channel][frame] = max(-1.0, min(1.0, mixed))
             }
         }
         
